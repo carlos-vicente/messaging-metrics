@@ -8,6 +8,7 @@ using GreenPipes;
 using MassTransit;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -28,10 +29,18 @@ namespace WebApi
 
         private IConfiguration Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
+
+            services
+                .AddMultiTenant()
+                .WithDelegateStrategy(context =>
+                {
+                    var request = ((HttpContext) context).Request;
+                    return Task.FromResult(request.Headers["api_key"].SingleOrDefault());
+                })
+                .WithConfigurationStore();
             
             services.AddMassTransit(configurator =>
             {
@@ -60,11 +69,13 @@ namespace WebApi
                 }));
             });
 
+            services.AddScoped<IPipe<SendContext>, MultiTenantSendContextPipe>();
+
             services.AddHostedService<BusService>();
 
-            services.AddSwaggerGen(c =>
+            services.AddSwaggerGen(genOptions =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo
+                genOptions.SwaggerDoc("v1", new OpenApiInfo
                 {
                     Title = "Masstransit testing framework",
                     Version = "v1"
@@ -74,11 +85,17 @@ namespace WebApi
 
                 var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
                 var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-                c.IncludeXmlComments(xmlPath);
+                genOptions.IncludeXmlComments(xmlPath);
+                
+                genOptions.AddSecurityDefinition("api_key", new OpenApiSecurityScheme
+                {
+                    Type = SecuritySchemeType.ApiKey,
+                    In = ParameterLocation.Header,
+                    Name = "api_key"
+                });
             });
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
@@ -92,6 +109,7 @@ namespace WebApi
             app.UseSwagger();
 
             app.UseRouting();
+            app.UseMultiTenant();
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();

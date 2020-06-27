@@ -13,6 +13,7 @@
       <PackageReference Include="MassTransit.Hangfire" Version="6.3.2" />
       <PackageReference Include="MassTransit.RabbitMQ" Version="6.3.2" />
       <PackageReference Include="Serilog.AspNetCore" Version="3.2.0" />
+      <PackageReference Include="Serilog.Enrichers.Thread" Version="3.1.0" />
       <PackageReference Include="Serilog.Settings.Configuration" Version="3.1.0" />
       <PackageReference Include="Serilog.Sinks.Console" Version="3.1.1" />
     </ItemGroup>

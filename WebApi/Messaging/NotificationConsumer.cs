@@ -38,8 +38,9 @@ namespace WebApi.Messaging
             var redC = $"[redeliveryCount:{context.GetRedeliveryCount()}]";
             var retA = $"[retryAttempt:{context.GetRetryAttempt()}]"; 
             var retC = $"[retryCount:{context.GetRetryCount()}]";
+            var ten = $"[tenantId:{context.Headers.Get<string>("tenant-id")}]";
             
-            _logger.LogInformation($"Consuming NotifySomethingHappened {id}{hap}{redC}{retA}{retC}");
+            _logger.LogInformation($"Consuming NotifySomethingHappened {id}{hap}{ten}{redC}{retA}{retC}");
 
             if (string.IsNullOrWhiteSpace(context.Message.WhatHappened))
             {
