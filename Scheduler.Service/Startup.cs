@@ -3,10 +3,12 @@ using Hangfire;
 using Hangfire.SqlServer;
 using MassTransit;
 using MassTransit.HangfireIntegration;
+using MassTransit.PrometheusIntegration;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Prometheus;
 
 namespace Scheduler.Service
 {
@@ -47,6 +49,7 @@ namespace Scheduler.Service
                 configurator.AddBus(context => Bus.Factory.CreateUsingRabbitMq(rabbit =>
                 {
                     rabbit.Host(Configuration.GetValue<string>("RabbitMqHost"));
+                    rabbit.UsePrometheusMetrics(serviceName: "scheduler");
                     rabbit.UseHangfireScheduler(
                         context.Container.GetRequiredService<IHangfireComponentResolver>(),
                         "scheduler");
@@ -62,7 +65,7 @@ namespace Scheduler.Service
             app.UseRouting();
             app.UseEndpoints(endpoints =>
             {
-                
+                endpoints.MapMetrics();
             });
         }
     }
